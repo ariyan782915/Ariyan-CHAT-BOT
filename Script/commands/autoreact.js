@@ -1,9 +1,9 @@
 module.exports.config = {
   name: "autoreact",
-  version: "1.1.2",
+  version: "1.1.3",
   hasPermission: 0,
   credits: "CYBER-BOT",
-  description: "Bot React with extended emoji list",
+  description: "Bot Reacts randomly to some messages",
   commandCategory: "No Prefix",
   cooldowns: 0,
 };
@@ -13,7 +13,10 @@ module.exports.handleEvent = async ({ api, event }) => {
   
   if (threadData["🥰"] === false) return;
 
-  // Ekhane list-ti bariye deya hoyeche
+  // এখানে Probability সেট করা হয়েছে (০.২ মানে ২০% সম্ভাবনা)
+  // সব মেসেজে রিঅ্যাক্ট না দিয়ে এটি র‍্যান্ডমলি রিঅ্যাক্ট দিবে
+  if (Math.random() > 0.2) return; 
+
   const emojis = ["❤️", "💖", "🔥", "✨", "🥰", "😍", "🤩", "🥀", "🌸", "🦋", "😆", "😎", "💯", "🤞", "🥂", "🎈", "👻", "⚡", "🌈", "🍭"];
   const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
@@ -36,5 +39,5 @@ module.exports.run = async ({ api, event, Threads }) => {
   global.data.threadData.set(threadID, threadData.data);
 
   const status = threadData.data["🥰"] ? "ON" : "OFF";
-  api.sendMessage(`Auto React is now ${status}`, threadID, messageID);
+  api.sendMessage(`Auto React is now ${status} (Random Mode)`, threadID, messageID);
 };
