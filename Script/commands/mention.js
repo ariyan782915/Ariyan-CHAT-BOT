@@ -2,7 +2,7 @@ module.exports.config = {
  name: "mention",
  version: "1.0.0",
  hasPermssion: 2,
- credits: "𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐈𝐬𝐥𝐚𝐦",
+ credits: "Ariyan",
  description: "একবার করে বারবার কাউকে মেনশন করার কমান্ড",
  commandCategory: "group",
  usages: "/mention @mention [count]",
