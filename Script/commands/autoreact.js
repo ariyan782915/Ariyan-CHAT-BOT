@@ -4,7 +4,7 @@ module.exports.config = {
  hasPermission: 0,
  credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
  description: "Bot React",
- commandCategory: "No Prefix",
+ commandCategory: "!",
  cooldowns: 0,
 };
 
@@ -36,7 +36,7 @@ module.exports.run = async ({ api, event, Threads, getText }) => {
  global.data.threadData.set(threadID, threadData.data);
 
  api.sendMessage(
- `Auto-react is now ${threadData.data["🥰"] ? "ON 🟢" : "OFF 🔴"}`,
+ `Auto-react is now ${threadData.data["🥰"] ? "Off 🟢" : "OFF 🔴"}`,
  threadID,
  messageID
  );
