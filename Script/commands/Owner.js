@@ -4,7 +4,7 @@ const fs = require("fs-extra");
 module.exports.config = {
   name: "owner",
   version: "1.0.1",
-  hasPermssion: 0,
+  hasPermssion: 0, // 0 mane shobai use korte parbe
   credits: "Ariyan",
   description: "Show Owner Info with styled box & random photo",
   commandCategory: "Information",
@@ -13,8 +13,12 @@ module.exports.config = {
 };
 
 module.exports.run = async function ({ api, event }) {
+  // Ekhane apnar chobi gular direct link boshaben
+  const images = [
+    "https://i.imgur.com/vH6Z83v.jpg", 
+    "https://i.imgur.com/someOtherImage.jpg"
+  ];
 
-  
   const info = `
 ╔═════════════════════ ✿
 ║ ✨ 𝗢𝗪𝗡𝗘𝗥 𝗜𝗡𝗙𝗢 ✨
@@ -31,26 +35,25 @@ module.exports.run = async function ({ api, event }) {
 ╠═════════════════════ ✿
 ║ 📘 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :
 ║ https://www.facebook.com/share/1ToNyuuj3x/
-║ 
-║
-║ 
 ╚═════════════════════ ✿
 `;
 
-  
-
   const randomImg = images[Math.floor(Math.random() * images.length)];
+  const path = __dirname + "/cache/owner.jpg";
 
   const callback = () => api.sendMessage(
     {
       body: info,
-      attachment: fs.createReadStream(__dirname + "/cache/owner.jpg")
+      attachment: fs.createReadStream(path)
     },
     event.threadID,
-    () => fs.unlinkSync(__dirname + "/cache/owner.jpg")
+    () => {
+      if (fs.existsSync(path)) fs.unlinkSync(path);
+    },
+    event.messageID
   );
 
   return request(encodeURI(randomImg))
-    .pipe(fs.createWriteStream(__dirname + "/cache/owner.jpg"))
+    .pipe(fs.createWriteStream(path))
     .on("close", () => callback());
 };
