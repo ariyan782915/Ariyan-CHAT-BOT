@@ -3,12 +3,12 @@ const fs = require('fs');
 
 module.exports.config = {
   name: "song",
-  version: "4.1.0",
+  version: "5.0.0",
   aliases: ["music", "play"],
   credits: "Ariyan",
   countDown: 5,
   hasPermssion: 0,
-  description: "Download music with original speed (Fix 1.5x speed issue)",
+  description: "Direct song download with original speed",
   commandCategory: "media",
   usePrefix: true,
   prefix: true,
@@ -18,38 +18,46 @@ module.exports.config = {
 module.exports.run = async ({ api, args, event }) => {
   const { threadID, messageID } = event;
   let keyWord = args.join(" ");
-  if (!keyWord) return api.sendMessage("❌ গানের নাম দিন। যেমন: /song tumi amar", threadID, messageID);
+  if (!keyWord) return api.sendMessage("❌ Ganer nam din. Udaharon: /song tumi amar", threadID, messageID);
 
   try {
-    api.sendMessage(`🔍 "${keyWord}" গানটি খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...`, threadID, messageID);
+    api.sendMessage(`🔍 "${keyWord}" khoja hochhe...`, threadID, messageID);
 
-    // ১. ইউটিউব সার্চ (স্টাবল এপিআই)
-    const searchRes = await axios.get(`https://jishun1-api.onrender.com/ytsearch?query=${encodeURIComponent(keyWord)}`);
-    const video = searchRes.data.data[0];
+    // 1. Search and Get Video ID
+    const searchUrl = `https://api.diptoit.com/yt/search?query=${encodeURIComponent(keyWord)}`;
+    const searchRes = await axios.get(searchUrl);
     
-    if (!video) return api.sendMessage("⭕ কোনো গান পাওয়া যায়নি!", threadID, messageID);
+    if (!searchRes.data || !searchRes.data.results || searchRes.data.results.length === 0) {
+      return api.sendMessage("⭕ Kono gan pawa jayni!", threadID, messageID);
+    }
     
-    const videoURL = video.url;
+    const video = searchRes.data.results[0];
+    const videoID = video.id;
     const title = video.title;
 
-    // ২. অরিজিনাল স্পিড নিশ্চিত করার জন্য নতুন ডাউনলোড এপিআই
-    const dlURL = `https://jishun1-api.onrender.com/ytdl?url=${encodeURIComponent(videoURL)}`;
-    const path = __dirname + `/cache/music_${Date.now()}.mp3`;
+    api.sendMessage(`📥 Processing: ${title}\nOriginal speed check hochhe...`, threadID, messageID);
 
-    // ৩. ফাইল ডাউনলোড এবং সেভ
-    const response = await axios.get(dlURL, { responseType: "arraybuffer" });
+    // 2. Direct Download Link (New Stable Server)
+    const dlUrl = `https://api.diptoit.com/yt/download?url=https://www.youtube.com/watch?v=${videoID}&type=mp3`;
+    const dlRes = await axios.get(dlUrl);
+    const audioLink = dlRes.data.download_url;
+
+    if (!audioLink) throw new Error("Link not found");
+
+    // 3. Download to Buffer and Send
+    const path = __dirname + `/cache/song_${Date.now()}.mp3`;
+    const response = await axios.get(audioLink, { responseType: "arraybuffer" });
     fs.writeFileSync(path, Buffer.from(response.data));
 
-    // ফাইল সাইজ চেক (মেসেঞ্জারে ২৫ এমবি এর বেশি পাঠানো যায় না)
+    // File size safety
     const stats = fs.statSync(path);
     if (stats.size > 26214400) {
       fs.unlinkSync(path);
-      return api.sendMessage("⭕ দুঃখিত, ফাইলটি অনেক বড় (25MB+)। অন্য কোনো গান চেষ্টা করুন।", threadID, messageID);
+      return api.sendMessage("⭕ File size 25MB er boro, tai pathano gelo na.", threadID, messageID);
     }
 
-    // ৪. অরিজিনাল স্পিডে অডিও পাঠানো
     await api.sendMessage({
-      body: `✅ ডাউনলোড সম্পন্ন!\n🎶 গান: ${title}\n⏱️ সময়: ${video.duration}\n\nসাউন্ড এখন অরিজিনাল স্পিডে কাজ করবে।`,
+      body: `✅ Download Somponno!\n🎶 Title: ${title}\n🎧 Speed: Original (1x)`,
       attachment: fs.createReadStream(path)
     }, threadID, () => {
       if (fs.existsSync(path)) fs.unlinkSync(path);
@@ -57,6 +65,6 @@ module.exports.run = async ({ api, args, event }) => {
 
   } catch (err) {
     console.error(err);
-    return api.sendMessage("❌ সার্ভার সমস্যার কারণে গানটি পাঠানো যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।", threadID, messageID);
+    return api.sendMessage("❌ Server Busy! Doya kore arekbar chesta korun.", threadID, messageID);
   }
 };
