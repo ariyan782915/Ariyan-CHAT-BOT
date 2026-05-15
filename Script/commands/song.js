@@ -3,63 +3,60 @@ const fs = require('fs');
 
 module.exports.config = {
   name: "song",
-  version: "3.2.0",
+  version: "4.0.0",
   aliases: ["music", "play"],
   credits: "Ariyan",
   countDown: 5,
   hasPermssion: 0,
-  description: "Download audio from YouTube with high speed",
+  description: "Download high quality audio from YouTube with new stable API",
   commandCategory: "media",
   usePrefix: true,
   prefix: true,
-  usages: "{pn} [গানের নাম]"
+  usages: "{pn} [Ganer nam]"
 };
 
 module.exports.run = async ({ api, args, event }) => {
   const { threadID, messageID } = event;
   let keyWord = args.join(" ");
-  if (!keyWord) return api.sendMessage("❌ গানের নাম বা ইউটিউব লিঙ্ক দিন।", threadID, messageID);
+  if (!keyWord) return api.sendMessage("❌ Ganer nam ba YouTube link din.", threadID, messageID);
 
   try {
-    api.sendMessage(`🔍 "${keyWord}" গানটি খোঁজা হচ্ছে...`, threadID, messageID);
+    api.sendMessage(`🔍 "${keyWord}" gan-ti khoja hochhe...`, threadID, messageID);
 
-    // ১. ইউটিউব সার্চ এবং ভিডিওর তথ্য সংগ্রহ
-    const searchRes = await axios.get(`https://api-all-1.m-mostakim0978.repl.co/ytFullSearch?songName=${encodeURIComponent(keyWord)}`);
+    // YouTube Search API
+    const searchRes = await axios.get(`https://jishun1-api.onrender.com/ytsearch?query=${encodeURIComponent(keyWord)}`);
+    const video = searchRes.data.data[0];
     
-    if (!searchRes.data || searchRes.data.length === 0) {
-       return api.sendMessage("⭕ কোনো গান পাওয়া যায়নি!", threadID, messageID);
-    }
+    if (!video) return api.sendMessage("⭕ Kono gan pawa jayni!", threadID, messageID);
     
-    const video = searchRes.data[0]; // প্রথম রেজাল্টটি নেওয়া হলো
-    const videoID = video.id;
+    const videoURL = video.url;
     const title = video.title;
 
-    api.sendMessage(`📥 ডাউনলোড হচ্ছে: ${title}\nদয়া করে অপেক্ষা করুন...`, threadID, messageID);
+    api.sendMessage(`📥 Download hochhe: ${title}\nDoya kore opekkha korun...`, threadID, messageID);
 
-    // ২. গান ডাউনলোডের লিঙ্ক সংগ্রহ
-    const dlRes = await axios.get(`https://api-all-1.m-mostakim0978.repl.co/ytDl3?link=${videoID}&format=mp3`);
-    const downloadLink = dlRes.data.downloadLink;
-
-    if (!downloadLink) throw new Error("Link not found");
-
-    // ৩. অডিও ফাইল ডাউনলোড ও সরাসরি সেন্ড করা
+    // Stable Download API (MP3 Format)
+    const dlURL = `https://jishun1-api.onrender.com/ytdl?url=${encodeURIComponent(videoURL)}`;
     const path = __dirname + `/cache/song_${Date.now()}.mp3`;
-    
-    // cache ফোল্ডার না থাকলে তৈরি করে নিবে
-    if (!fs.existsSync(__dirname + "/cache")) fs.mkdirSync(__dirname + "/cache");
 
-    const response = await axios.get(downloadLink, { responseType: "arraybuffer" });
+    const response = await axios.get(dlURL, { responseType: "arraybuffer" });
     fs.writeFileSync(path, Buffer.from(response.data));
 
+    // File size check (Messenger 25MB limit)
+    const stats = fs.statSync(path);
+    if (stats.size > 26214400) {
+      fs.unlinkSync(path);
+      return api.sendMessage("⭕ File size onek boro hoyay Messenger-e pathano shomvob noy.", threadID, messageID);
+    }
+
     await api.sendMessage({
-      body: `✅ ডাউনলোড সম্পন্ন!\n🎶 গান: ${title}\n👤 আপলোডার: ${video.author || 'YouTube'}\n⏰ সময়: ${video.time}`,
+      body: `✅ Download somponno!\n🎶 Gan: ${title}\n⏱️ Somoy: ${video.duration}`,
       attachment: fs.createReadStream(path)
     }, threadID, () => {
-      if (fs.existsSync(path)) fs.unlinkSync(path); // ফাইল পাঠিয়ে ডিলিট করে দিবে
+      if (fs.existsSync(path)) fs.unlinkSync(path);
     }, messageID);
 
   } catch (err) {
     console.error(err);
-    return api.sendMessage("❌ সার্ভার অনেক বিজি অথবা ফাইল সাইজ বেশি বড়। অন্য গানের নাম দিয়ে চেষ্টা করুন।", threadID, messageID);
+    return api.sendMessage("❌ Ei muhurte server ektu busy. Doya kore arekbar chesta korun ba onno kono ganer nam likhun.", threadID, messageID);
   }
 };
