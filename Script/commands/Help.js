@@ -1,156 +1,77 @@
-const fs = require("fs-extra");
-const request = require("request");
-const path = require("path");
+const axios = require("axios");
 
 module.exports.config = {
-    name: "help",
-    version: "2.0.0",
-    hasPermssion: 0,
-    credits: "Ariyan",
-    description: "Shows all commands with details",
-    commandCategory: "system",
-    usages: "[command name/page number]",
-    cooldowns: 5,
-    envConfig: {
-        autoUnsend: true,
-        delayUnsend: 20
+  name: "help",
+  version: "1.0.8",
+  hasPermission: 0,
+  credits: "Ariyan",
+  description: "Bot-er shob command ebong owner info dekhun",
+  commandCategory: "System",
+  usages: "/help [command name]",
+  cooldowns: 5
+};
+
+module.exports.run = async function ({ api, event, args }) {
+  const { commands } = global.client;
+  const { threadID, messageID } = event;
+
+  try {
+    // Anime picture API
+    const res = await axios.get("https://api.waifu.pics/sfw/waifu");
+    const imgUrl = res.data.url;
+
+    // 1. Shudhu /help likhle shob command list ebong Owner Info ashbe
+    if (!args[0]) {
+      let msg = "===== 🤖 BOT COMMANDS =====\n\n";
+      let categories = {};
+
+      commands.forEach((cmd, name) => {
+        const category = cmd.config.commandCategory || "General";
+        if (!categories[category]) categories[category] = [];
+        categories[category].push(name);
+      });
+
+      for (const category in categories) {
+        msg += `🔹 [ ${category.toUpperCase()} ]\n`;
+        msg += `➜ ${categories[category].join(", ")}\n\n`;
+      }
+
+      msg += `━━━━━━━━━━━━━\n`;
+      msg += `👤 OWNER INFO\n`;
+      msg += `➜ Name: Mijan (Ariyan)\n`;
+      msg += `➜ Facebook: fb.com/ariyan782915\n`;
+      msg += `➜ Status: Active\n`;
+      msg += `━━━━━━━━━━━━━\n`;
+      msg += `💡 Total Commands: ${commands.size}\n`;
+      msg += `📝 Detail janar jonno likhun: /help [command name]\n`;
+      msg += `📌 Prefix: /`;
+
+      return api.sendMessage({
+        body: msg,
+        attachment: await global.utils.getStreamFromURL(imgUrl)
+      }, threadID, messageID);
     }
-};
 
-module.exports.languages = {
-    "en": {
-        "moduleInfo": `╭━━━━━━━━━━━━━━━━╮
-┃ ✨ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐈𝐍𝐅𝐎 ✨
-┣━━━━━━━━━━━┫
-┃ 🔖 Name: %1
-┃ 📄 Usage: %2
-┃ 📜 Description: %3
-┃ 🔑 Permission: %4
-┃ 👨‍💻 Credit: %5
-┃ 📂 Category: %6
-┃ ⏳ Cooldown: %7s
-┣━━━━━━━━━━━━━━━━┫
-┃ ⚙ Prefix: %8
-┃ 🤖 Bot Name: %9
-┃ 👑 Owner: Ariyan
-╰━━━━━━━━━━━━━━━━╯`,
-        "helpList": "[ There are %1 commands. Use: \"%2help commandName\" to view more. ]",
-        "user": "User",
-        "adminGroup": "Admin Group",
-        "adminBot": "Admin Bot"
+    // 2. Nirdishto command-er details dekhate
+    const command = commands.get(args[0].toLowerCase());
+    if (command) {
+      const { config } = command;
+      const detail = `=== 💡 COMMAND INFO ===\n\n` +
+        `➜ Name: ${config.name}\n` +
+        `➜ Description: ${config.description}\n` +
+        `➜ Category: ${config.commandCategory}\n` +
+        `➜ Usage: /${config.name} ${config.usages || ""}\n` +
+        `➜ Cooldown: ${config.cooldowns}s`;
+
+      return api.sendMessage({
+        body: detail,
+        attachment: await global.utils.getStreamFromURL(imgUrl)
+      }, threadID, messageID);
+    } else {
+      return api.sendMessage(`❌ "${args[0]}" name-e kono command nei!`, threadID, messageID);
     }
-};
 
-// 🔹 এখানে আপনার ফটো Imgur লিংক করে বসাবেন ✅
-const helpImages = [
-    "https://imgur.com/a/Cpg44to",
-    "https://imgur.com/a/c1UTH7W",
-    "https://imgur.com/a/SoUEcmc",
-    "https://imgur.com/a/dNpVDe0"
-];
-
-
-function downloadImages(callback) {
-    const randomUrl = helpImages[Math.floor(Math.random() * helpImages.length)];
-    const filePath = path.join(__dirname, "cache", "help_random.jpg");
-
-    request(randomUrl)
-        .pipe(fs.createWriteStream(filePath))
-        .on("close", () => callback([filePath]));
-}
-
-module.exports.handleEvent = function ({ api, event, getText }) {
-    const { commands } = global.client;
-    const { threadID, messageID, body } = event;
-
-    if (!body || typeof body === "undefined" || body.indexOf("help") != 0) return;  
-    const splitBody = body.slice(body.indexOf("help")).trim().split(/\s+/);  
-    if (splitBody.length < 2 || !commands.has(splitBody[1].toLowerCase())) return;  
-
-    const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};  
-    const command = commands.get(splitBody[1].toLowerCase());  
-    const prefix = threadSetting.PREFIX || global.config.PREFIX;  
-
-    const detail = getText("moduleInfo",  
-        command.config.name,  
-        command.config.usages || "Not Provided",  
-        command.config.description || "Not Provided",  
-        command.config.hasPermssion,  
-        command.config.credits || "Unknown",  
-        command.config.commandCategory || "Unknown",  
-        command.config.cooldowns || 0,  
-        prefix,  
-        global.config.BOTNAME || "Ariyan 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭"  
-    );  
-
-    downloadImages(files => {  
-        const attachments = files.map(f => fs.createReadStream(f));  
-        api.sendMessage({ body: detail, attachment: attachments }, threadID, () => {  
-            files.forEach(f => fs.unlinkSync(f));  
-        }, messageID);  
-    });
-};
-
-module.exports.run = function ({ api, event, args, getText }) {
-    const { commands } = global.client;
-    const { threadID, messageID } = event;
-
-    const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};  
-    const prefix = threadSetting.PREFIX || global.config.PREFIX;  
-
-    if (args[0] && commands.has(args[0].toLowerCase())) {  
-        const command = commands.get(args[0].toLowerCase());  
-
-        const detailText = getText("moduleInfo",  
-            command.config.name,  
-            command.config.usages || "Not Provided",  
-            command.config.description || "Not Provided",  
-            command.config.hasPermssion,  
-            command.config.credits || "Unknown",  
-            command.config.commandCategory || "Unknown",  
-            command.config.cooldowns || 0,  
-            prefix,  
-            global.config.BOTNAME || "𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭"  
-        );  
-
-        downloadImages(files => {  
-            const attachments = files.map(f => fs.createReadStream(f));  
-            api.sendMessage({ body: detailText, attachment: attachments }, threadID, () => {  
-                files.forEach(f => fs.unlinkSync(f));  
-            }, messageID);  
-        });  
-        return;  
-    }  
-
-    const arrayInfo = Array.from(commands.keys())
-        .filter(cmdName => cmdName && cmdName.trim() !== "")
-        .sort();  
-
-    const page = Math.max(parseInt(args[0]) || 1, 1);  
-    const numberOfOnePage = 20;  
-    const totalPages = Math.ceil(arrayInfo.length / numberOfOnePage);  
-    const start = numberOfOnePage * (page - 1);  
-    const helpView = arrayInfo.slice(start, start + numberOfOnePage);  
-
-    let msg = helpView.map(cmdName => `┃ ✪ ${cmdName}`).join("\n");
-
-    const text = `╭━━━━━━━━━━━━━━━━╮
-┃ 📜 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐋𝐈𝐒𝐓 📜
-┣━━━━━━━━━━━━━━━┫
-┃ 📄 Page: ${page}/${totalPages}
-┃ 🧮 Total: ${arrayInfo.length}
-┣━━━━━━━━━━━━━━━━┫
-${msg}
-┣━━━━━━━━━━━━━━━━┫
-┃ ⚙ Prefix: ${prefix}
-┃ 🤖 Bot Name: ${global.config.BOTNAME || "Ariyan 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭"}
-┃ 👑 Owner: Ariyan 
-╰━━━━━━━━━━━━━━━━╯`;
-
-    downloadImages(files => {  
-        const attachments = files.map(f => fs.createReadStream(f));  
-        api.sendMessage({ body: text, attachment: attachments }, threadID, () => {  
-            files.forEach(f => fs.unlinkSync(f));  
-        }, messageID);  
-    });  
+  } catch (err) {
+    return api.sendMessage("Help list load hote somoshya hochhe. Doya kore abar chesta korun.", threadID, messageID);
+  }
 };
