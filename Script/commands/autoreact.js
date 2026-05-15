@@ -1,44 +1,40 @@
-
 module.exports.config = {
- name: "autoreact",
- version: "1.1.1",
- hasPermission: 0,
- credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
- description: "Bot React",
- commandCategory: "No Prefix",
- cooldowns: 0,
+  name: "autoreact",
+  version: "1.1.2",
+  hasPermission: 0,
+  credits: "CYBER-BOT",
+  description: "Bot React with extended emoji list",
+  commandCategory: "No Prefix",
+  cooldowns: 0,
 };
 
 module.exports.handleEvent = async ({ api, event }) => {
- const threadData = global.data.threadData.get(event.threadID) || {};
- if (threadData["🥰"] === false) return; // Auto-react off
+  const threadData = global.data.threadData.get(event.threadID) || {};
+  
+  if (threadData["🥰"] === false) return;
 
- cons
- const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+  // Ekhane list-ti bariye deya hoyeche
+  const emojis = ["❤️", "💖", "🔥", "✨", "🥰", "😍", "🤩", "🥀", "🌸", "🦋", "😆", "😎", "💯", "🤞", "🥂", "🎈", "👻", "⚡", "🌈", "🍭"];
+  const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
- console.log(`Reacting with ${randomEmoji} to message ${event.messageID}`); // Debug log
-
- api.setMessageReaction(randomEmoji, event.messageID, (err) => {
- if (err) console.error("Error sending reaction:", err);
- }, true);
+  api.setMessageReaction(randomEmoji, event.messageID, (err) => {
+    if (err) console.error("Error sending reaction:", err);
+  }, true);
 };
 
-module.exports.run = async ({ api, event, Threads, getText }) => {
- const { threadID, messageID } = event;
- const threadData = await Threads.getData(threadID);
- 
- if (typeof threadData.data["🥰"] === "undefined") {
- threadData.data["🥰"] = true; // Default to "on"
- } else {
- threadData.data["🥰"] = !threadData.data["🥰"]; // Toggle
- }
+module.exports.run = async ({ api, event, Threads }) => {
+  const { threadID, messageID } = event;
+  let threadData = await Threads.getData(threadID);
 
- await Threads.setData(threadID, { data: threadData.data });
- global.data.threadData.set(threadID, threadData.data);
+  if (typeof threadData.data["🥰"] === "undefined") {
+    threadData.data["🥰"] = true; 
+  } else {
+    threadData.data["🥰"] = !threadData.data["🥰"];
+  }
 
- api.sendMessage(
- `Auto-react is now ${threadData.data["🥰"] ? "ON 🟢" : "OFF 🔴"}`,
- threadID,
- messageID
- );
+  await Threads.setData(threadID, { data: threadData.data });
+  global.data.threadData.set(threadID, threadData.data);
+
+  const status = threadData.data["🥰"] ? "ON" : "OFF";
+  api.sendMessage(`Auto React is now ${status}`, threadID, messageID);
 };
