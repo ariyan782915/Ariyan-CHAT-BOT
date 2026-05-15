@@ -3,7 +3,7 @@ module.exports.config = {
   version: "1.0.0",
   hasPermssion: 0,
   credits: "Ariyan",
-  description: "Random Anime Videos From SAHU API",
+  description: "Random Anime Videos From Ariyan",
   commandCategory: "video",
   usages: "anemi",
   cooldowns: 5
