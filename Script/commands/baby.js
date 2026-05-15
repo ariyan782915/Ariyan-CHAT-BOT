@@ -7,7 +7,7 @@ module.exports.config = {
  name: "baby",
  version: "1.0.3",
  hasPermssion: 0,
- credits: "ULLASH",
+ credits: "Ariyan",
  description: "Cute AI Baby Chatbot | Talk, Teach & Chat with Emotion ☢️",
  commandCategory: "Chat",
  usages: "[message/query]",
