@@ -2,7 +2,7 @@ module.exports.config = {
   name: "ban",
   version: "2.4.0",
   hasPermssion: 2,
-  credits: "SHAHADAT SAHU",
+  credits: "Ariyan",
   description: "Ban or unban a user directly, works on reply too",
   commandCategory: "group",
   usages: `${global.config.PREFIX}ban <UID/@tag>\n${global.config.PREFIX}unban <UID/@tag>`,
