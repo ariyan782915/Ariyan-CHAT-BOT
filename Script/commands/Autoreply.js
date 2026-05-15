@@ -75,7 +75,7 @@ module.exports.handleEvent = async function ({ api, event }) {
         name: this.config.name,
         messageID: info.messageID,
         author: senderID,
-        type: "sahu"
+        type: "Ariyan"
       });
     },
     messageID
@@ -107,7 +107,7 @@ module.exports.handleReply = async function ({ api, event, handleReply }) {
           name: module.exports.config.name,
           messageID: info.messageID,
           author: event.senderID,
-          type: "sahu"
+          type: "Ariyan"
         });
       },
       event.messageID
