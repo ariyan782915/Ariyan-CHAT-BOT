@@ -2,7 +2,7 @@ module.exports.config = {
   name: "bal",
   version: "1.0.0",
   hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
+  credits: "Ariyan",
   description: "Check your balance or someone else's balance",
   commandCategory: "Economy",
   usages: "[tag or reply or none]",
