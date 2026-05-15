@@ -2,7 +2,7 @@ module.exports.config = {
   name: "bf",
   version: "2.0.0",
   hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
+  credits: "Ariyan ",
   description: "couple banner",
   commandCategory: "banner",
   usages: "[@mention | reply]",
