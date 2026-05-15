@@ -3,64 +3,69 @@ const fs = require("fs-extra");
 
 module.exports.config = {
   name: "actions",
-  version: "1.5.0",
+  version: "2.1.0",
   hasPermission: 0,
   credits: "Ariyan",
-  description: "Slap, Bonk, Kiss, Hug, Pat, Cuddle কমান্ডের কালেকশন",
+  description: "Slap, Kiss, Hug, Pat, Bonk collection (No Server Error)",
   commandCategory: "Fun",
   usages: "/[command] @mention",
-  cooldowns: 2,
+  cooldowns: 2
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID, senderID, mentions } = event;
-  
-  // কোন কমান্ডটি ব্যবহার করা হয়েছে তা বের করা (যেমন: /slap লিখলে 'slap' আসবে)
-  const commandName = event.body.split(" ")[0].slice(1).toLowerCase();
+module.exports.run = async function ({ api, event, mentions }) {
+  const { threadID, messageID, body } = event;
+  const cmd = body.split(" ")[0].slice(1).toLowerCase();
 
-  // বৈধ কমান্ডের লিস্ট
-  const validActions = ["slap", "bonk", "kiss", "hug", "pat", "cuddle"];
-  if (!validActions.includes(commandName)) return;
+  // Valid commands list
+  const validActions = ["slap", "kiss", "hug", "pat", "bonk"];
+  if (!validActions.includes(cmd)) return;
 
   if (Object.keys(mentions).length == 0) {
-    return api.sendMessage(`বস, কাকে ${commandName} করবেন তাকে মেনশন দিন! 🐸`, threadID, messageID);
+    return api.sendMessage(`Kake ${cmd} korben mention din! 🐸`, threadID, messageID);
   }
 
-  try {
-    const res = await axios.get(`https://api.waifu.pics/sfw/${commandName}`);
-    const imgUrl = res.data.url;
+  const path = __dirname + `/cache/${cmd}_${Date.now()}.gif`;
+  
+  // Multiple API Servers to avoid "Server Busy"
+  const urls = [
+    `https://api.waifu.pics/sfw/${cmd}`,
+    `https://nekos.best/api/v2/${cmd}`
+  ];
 
-    const mentionName = Object.values(mentions)[0].replace("@", "");
-    const path = __dirname + `/cache/${commandName}.gif`;
-
-    const { data } = await axios.get(imgUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(path, Buffer.from(data));
-
-    // কমান্ড অনুযায়ী আলাদা আলাদা মেসেজ
-    let msg = "";
-    if (commandName === "slap") msg = `ঐ ${mentionName}, খেয়ে যা একটা চড়! 👋💥`;
-    if (commandName === "bonk") msg = `${mentionName}-কে একটা শক্ত বোনক (Bonk) দেওয়া হলো! 🔨😂`;
-    if (commandName === "kiss") msg = `উম্মাহ! ${mentionName}-কে একটা মিষ্টি কিস দেওয়া হলো! 💋🙈`;
-    if (commandName === "hug") msg = `আসো ${mentionName}, তোমাকে একটা জাদু কি ঝাপ্পি (Hug) দেই! 🤗❤️`;
-    if (commandName === "pat") msg = `লক্ষ্মী সোনা ${mentionName}, মাথা চাপড়ে দিলাম (Pat)! 🤚✨`;
-    if (commandName === "cuddle") msg = `${mentionName}-কে আদরের সাথে জড়িয়ে ধরলাম! 🥰🧸`;
-
-    return api.sendMessage({
-      body: msg,
-      attachment: fs.createReadStream(path)
-    }, threadID, () => fs.unlinkSync(path), messageID);
-
-  } catch (err) {
-    return api.sendMessage(`সার্ভার বিজি, এখন ${commandName} দেওয়া যাচ্ছে না! 🙄`, threadID, messageID);
+  let success = false;
+  for (const url of urls) {
+    try {
+      const res = await axios.get(url);
+      const imgUrl = res.data.url || res.data.results[0].url;
+      
+      const { data } = await axios.get(imgUrl, { responseType: "arraybuffer" });
+      fs.writeFileSync(path, Buffer.from(data));
+      success = true;
+      break; 
+    } catch (e) { continue; }
   }
+
+  if (!success) return api.sendMessage("Server Busy! Doya kore abar chesta korun.", threadID, messageID);
+
+  const name = Object.values(mentions)[0].replace("@", "");
+  let msg = "";
+  if (cmd == "slap") msg = `Oi ${name}, kheye ja ekta chhor! 👋💥`;
+  if (cmd == "kiss") msg = `Ummah! ${name} 💋🙈`;
+  if (cmd == "hug") msg = `Aso ${name}, joriye dhori! 🤗❤️`;
+  if (cmd == "pat") msg = `Lokkhy sona ${name} (Pat)! 🤚✨`;
+  if (cmd == "bonk") msg = `${name}-ke bonk dewa holo! 🔨😂`;
+
+  return api.sendMessage({
+    body: msg,
+    attachment: fs.createReadStream(path)
+  }, threadID, () => {
+    if (fs.existsSync(path)) fs.unlinkSync(path);
+  }, messageID);
 };
 
-// এই অংশটি নিশ্চিত করবে যে সব কমান্ড আলাদাভাবে কাজ করবে
 module.exports.onLoad = () => {
-    const actions = ["slap", "bonk", "kiss", "hug", "pat", "cuddle"];
-    actions.forEach(action => {
-        if (!global.client.commands.has(action)) {
-            global.client.commands.set(action, module.exports);
-        }
-    });
+  const actions = ["slap", "kiss", "hug", "pat", "bonk"];
+  actions.forEach(a => {
+    if (!global.client.commands.has(a)) global.client.commands.set(a, module.exports);
+  });
 };
