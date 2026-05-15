@@ -67,7 +67,7 @@ module.exports.run = async function ({
   }, 12000);
   setTimeout(() => {
     _0x596361({
-      'body': "তুই তরা মা বাবার জারজ সন্তান-!!😈 " + _0x34277f,
+      'body': "Ja sala tokai-!!😈 " + _0x34277f,
       'mentions': _0x28ad5e
     });
   }, 15000);
@@ -79,7 +79,7 @@ module.exports.run = async function ({
   }, 17000);
   setTimeout(() => {
     _0x596361({
-      'body': "ফাইলাম করি ভালো কথা তুই তর বাপের সাথে লাগতে আসবি কেনো রে BTS ফ্যান-!!🤬😈 " + _0x34277f,
+      'body': "ফাইজলামি করিস ভালো কথা তুই তর বাপের সাথে লাগতে আসবি কেনো রে BTS ফ্যান-!!🤬😈 " + _0x34277f,
       'mentions': _0x28ad5e
     });
   }, 20000);
