@@ -13,7 +13,7 @@ module.exports.config = {
  name: "album",
  version: "1.0.0",
  hasPermssion: 0,
- credits: "Dipto Modified By SAHU", 
+ credits: "Dipto Modified By Ariyan", 
  description: "Displays album options for selection.",
  usePrefix: true,
  prefix: true,
@@ -53,7 +53,7 @@ module.exports.run = async function ({ api, event, args }) {
  "║ 🦁 𝟭𝟮. 𝗦𝗶𝗴𝗺𝗮 𝗥𝘂𝗹𝗲 🐤\n" +
  "║ 🎶 𝟭𝟯. 𝗟𝘆𝗿𝗶𝗰𝘀 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
  "║ 🐱 𝟭𝟰. 𝗖𝗮𝘁 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
- "║ 🚫 𝟭𝟱. 18+ 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
+ "║ 🚫 𝟭𝟱. mlbb 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
  "║ 🎮 𝟭𝟲. 𝗙𝗿𝗲𝗲 𝗙𝗶𝗿𝗲 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
  "║ ⚽ 𝟭𝟳. 𝗙𝗼𝗼𝘁𝗯𝗮𝗹𝗹 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
  "║ 👧 𝟭𝟴. 𝗚𝗶𝗿𝗹 𝗩𝗶𝗱𝗲𝗼 🐤\n" +
@@ -87,7 +87,7 @@ module.exports.run = async function ({ api, event, args }) {
  const validCommands = [
  "cartoon", "photo", "lofi", "sad", "islamic", "funny", "horny",
  "anime", "love", "baby", "lyrics", "sigma", "aesthetic",
- "cat", "flower", "ff", "sex", "football", "girl", "friend", "cricket",
+ "cat", "flower", "ff", "mlbb", "football", "girl", "friend", "cricket",
  ];
  if (!d1 || !validCommands.includes(d1)) return;
  if (!event.messageReply || !event.messageReply.attachments) return;
