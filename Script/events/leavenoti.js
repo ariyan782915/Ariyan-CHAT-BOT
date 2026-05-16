@@ -1,8 +1,8 @@
 module.exports.config = {
   name: "leave",
   eventType: ["log:unsubscribe"],
-  version: "1.0.0",
-  credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
+  version: "1.0.1",
+  credits: "Ariyan",
   description: "Thông báo bot hoặc người rời khỏi nhóm",
   dependencies: {
     "fs-extra": "",
@@ -21,10 +21,11 @@ module.exports.run = async function({ api, event, Users, Threads }) {
   const name = global.data.userName.get(event.logMessageData.leftParticipantFbId) || await Users.getNameUser(event.logMessageData.leftParticipantFbId);
 
   const type = (event.author == event.logMessageData.leftParticipantFbId)
-    ? " তোর সাহস কম না  গ্রুপের এডমিনের পারমিশন ছাড়া তুই লিভ  নিস😡😠🤬 \n✦─────꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭────✦"
-    : "তোমার এই গ্রুপে থাকার কোনো যোগ্যাতা নেই ছাগল😡\nতাই তোমাকে লাথি মেরে গ্রুপ থেকে বের করে দেওয়া হলো🤪 WELLCOME REMOVE🤧\n✦─────꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭────✦";
+    ? " তোর সাহস কম না  গ্রুপের এডমিনের পারমিশন ছাড়া তুই লিভ  নিস😡😠🤬 \n✦─────꯭─⃝‌‌𝐀𝐫𝐢𝐲𝐚𝐧 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭────✦"
+    : "তোমার এই group এ থাকার কোনো যোগ্যতা নেই ছাগল😡\nতাই তোমাকে লাথি মেরে গ্রুপ থেকে বের করে দেওয়া হলো🤪 WELCOME REMOVE🤧\n✦─────꯭─⃝‌‌𝐀𝐫𝐢𝐲𝐚𝐧 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭────✦";
 
-  const path = join(__dirname, "Shahadat", "leaveGif");
+  // ফোল্ডারের নাম Shahadat থেকে পরিবর্তন করে Ariyan করা হয়েছে
+  const path = join(__dirname, "Ariyan", "leaveGif");
   const gifPath = join(path, `leave1.gif`);
 
   if (!existsSync(path)) mkdirSync(path, { recursive: true });
