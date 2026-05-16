@@ -1,73 +1,65 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-
 module.exports.config = {
-  name: "art",
-  version: "1.0.0",
+  name: "help",
+  version: "1.0.5",
   hasPermission: 0,
   credits: "Ariyan",
-  description: "AI দিয়ে যেকোনো অবাস্তব বা কাল্পনিক ছবি আর্ট করুন (Text to Image)",
-  commandCategory: "AI Tools",
-  usages: "/art [যা তৈরি করতে চান তার বিবরণ]",
-  cooldowns: 5
+  description: "বটের সব কমান্ডের লিস্ট এবং ব্যবহার দেখার নিয়ম।",
+  commandCategory: "System",
+  usages: "/help [কমান্ডের নাম]",
+  cooldowns: 2
 };
 
 module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID } = event;
-  const prompt = args.join(" ");
+  const botPrefix = global.config.PREFIX || "/";
 
-  // ইউজার যদি কোনো বিবরণ না দেয়
-  if (!prompt) {
-    return api.sendMessage(
-      "❌ বস, আপনি কী আর্ট করতে চান তা লিখে প্রম্পট দিন!\n\nযেমন: /art a beautiful futuristic city cyberpunk style",
-      threadID,
-      messageID
-    );
+  // বটের সব কমান্ডের লিস্ট তৈরি করা
+  const commands = Array.from(global.client.commands.values());
+  
+  // ইউজার যদি নির্দিষ্ট কোনো কমান্ডের নিয়ম দেখতে চায় (যেমন: /help art)
+  if (args[0]) {
+    const commandName = args[0].toLowerCase();
+    const command = global.client.commands.get(commandName);
+
+    if (!command) {
+      return api.sendMessage(`❌ বস, "${commandName}" নামে কোনো কমান্ড খুঁজে পাওয়া যায়নি! সব কমান্ড দেখতে শুধু "${botPrefix}help" লিখুন।`, threadID, messageID);
+    }
+
+    const config = command.config;
+    const msg = `👑 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐃𝐄𝐓𝐀𝐈𝐋𝐒 👑\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `📝 নাম: ${config.name}\n` +
+                `ℹ️ বিবরণ: ${config.description || "নেই"}\n` +
+                `Category: ${config.commandCategory || "Fun"}\n` +
+                `🚀 ব্যবহার: ${config.usages || "নেই"}\n` +
+                `⏱️ Cooldown: ${config.cooldowns || 1} সেকেন্ড\n` +
+                `👤 Credits: ${config.credits || "Unknown"}`;
+                
+    return api.sendMessage(msg, threadID, messageID);
   }
 
-  const cacheDir = __dirname + "/cache";
-  const path = cacheDir + `/art_${Date.now()}.png`;
+  // সব কমান্ড ক্যাটাগরি অনুযায়ী সাজানো
+  const categories = {};
+  commands.forEach(cmd => {
+    if (!cmd.config || !cmd.config.name) return;
+    const cat = cmd.config.commandCategory || "অন্যান্য";
+    if (!categories[cat]) categories[cat] = [];
+    if (!categories[cat].includes(cmd.config.name)) {
+      categories[cat].push(cmd.config.name);
+    }
+  });
 
-  // ক্যাশ ফোল্ডার না থাকলে তৈরি করবে
-  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-
-  // লোডিং মেসেজ
-  const wait = await api.sendMessage(
-    `⏳ একটু অপেক্ষা করুন বস, AI আপনার কল্পনার ছবি " ${prompt} " আর্ট করছে... 🎨`,
-    threadID,
-    messageID
-  );
-
-  try {
-    // প্রিমিয়াম ও হাই-কোয়ালিটি ফ্রি ইমেজ জেনারেশন API (Pollinations AI)
-    const apiUrl = `https://image.pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
-
-    const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(path, Buffer.from(response.data));
-
-    // ছবি তৈরি হয়ে গেলে লোডিং মেসেজটি ডিলিট করবে
-    api.unsendMessage(wait.messageID);
-
-    return api.sendMessage(
-      {
-        body: `🎨 আপনার কাল্পনিক আর্ট রেডি বস!\n\n💡 প্রম্পট: ${prompt}\n👑 Owner: Ariyan`,
-        attachment: fs.createReadStream(path)
-      },
-      threadID,
-      () => {
-        if (fs.existsSync(path)) fs.unlinkSync(path);
-      },
-      messageID
-    );
-
-  } catch (e) {
-    // কোনো ভুল হলে লোডিং মেসেজ ডিলিট করবে এবং এরর দেখাবে
-    api.unsendMessage(wait.messageID);
-    console.error(e);
-    return api.sendMessage(
-      "❌ দুঃখিত বস, ছবি আর্ট করার সার্ভারটি এই মুহূর্তে ব্যস্ত আছে। দয়া করে একটু পরে আবার চেষ্টা করুন।",
-      threadID,
-      messageID
-    );
+  let helpMsg = `╭•┄┅═══❁👑❁═══┅┄•╮\n   𝗔𝗿𝗶𝘆𝗮𝗻 𝗖𝗵𝗮𝘁 𝗕𝗼𝘁 𝗛𝗲𝗹𝗽\n╰•┄┅═══❁👑❁═══┅┄•╯\n\n`;
+  
+  for (const category in categories) {
+    helpMsg += `🔹 [ ${category.toUpperCase()} ] 🔹\n`;
+    helpMsg += `» ${categories[category].join(", ")}\n\n`;
   }
+
+  helpMsg += `━━━━━━━━━━━━━━━━━━\n`;
+  helpMsg += `📝 মোট কমান্ড সংখ্যা: ${commands.length} টি\n`;
+  helpMsg += `💡 যেকোনো কমান্ডের ব্যবহার জানতে লিখুন: ${botPrefix}help [কমান্ডের নাম]\n`;
+  helpMsg += `👑 Owner: Ariyan`;
+
+  return api.sendMessage(helpMsg, threadID, messageID);
 };
