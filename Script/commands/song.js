@@ -1,70 +1,61 @@
 const axios = require("axios");
-const fs = require('fs');
+const fs = require("fs-extra");
 
 module.exports.config = {
   name: "song",
-  version: "5.0.0",
-  aliases: ["music", "play"],
+  version: "7.0.0",
+  aliases: ["music", "sing"],
   credits: "Ariyan",
-  countDown: 5,
-  hasPermssion: 0,
-  description: "Direct song download with original speed",
-  commandCategory: "media",
-  usePrefix: true,
-  prefix: true,
-  usages: "/song [Ganer nam]"
+  hasPermission: 0,
+  description: "SoundCloud থেকে সরাসরি এবং সুপারফাস্ট গান ডাউনলোড করুন",
+  commandCategory: "Media",
+  usages: "/song [গানের নাম]",
+  cooldowns: 2
 };
 
-module.exports.run = async ({ api, args, event }) => {
+module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID } = event;
-  let keyWord = args.join(" ");
-  if (!keyWord) return api.sendMessage("❌ Ganer nam din. Udaharon: /song tumi amar", threadID, messageID);
+  const songName = args.join(" ");
+
+  if (!songName) {
+    return api.sendMessage("❌ গানের নাম দিন বস! যেমন: /song tumi amar", threadID, messageID);
+  }
 
   try {
-    api.sendMessage(`🔍 "${keyWord}" khoja hochhe...`, threadID, messageID);
+    api.sendMessage(`🔍 "${songName}" গানটি ডিরেক্ট সোর্স থেকে খোঁজা হচ্ছে...`, threadID, messageID);
 
-    // 1. Search and Get Video ID
-    const searchUrl = `https://api.diptoit.com/yt/search?query=${encodeURIComponent(keyWord)}`;
-    const searchRes = await axios.get(searchUrl);
+    // SoundCloud Direct Music API
+    const res = await axios.get(`https://api.popcat.xyz/soundcloud?q=${encodeURIComponent(songName)}`);
     
-    if (!searchRes.data || !searchRes.data.results || searchRes.data.results.length === 0) {
-      return api.sendMessage("⭕ Kono gan pawa jayni!", threadID, messageID);
+    if (!res.data || !res.data.download) {
+      return api.sendMessage("⭕ দুঃখিত, এই গানটি খুঁজে পাওয়া যায়নি! দয়া করে অন্য কোনো নাম লিখে ট্রাই করুন।", threadID, messageID);
     }
-    
-    const video = searchRes.data.results[0];
-    const videoID = video.id;
-    const title = video.title;
 
-    api.sendMessage(`📥 Processing: ${title}\nOriginal speed check hochhe...`, threadID, messageID);
+    const audioUrl = res.data.download;
+    const title = res.data.title || "SoundCloud Track";
+    const duration = res.data.duration || "Unknown";
+    const path = __dirname + `/cache/sc_song_${Date.now()}.mp3`;
 
-    // 2. Direct Download Link (New Stable Server)
-    const dlUrl = `https://api.diptoit.com/yt/download?url=https://www.youtube.com/watch?v=${videoID}&type=mp3`;
-    const dlRes = await axios.get(dlUrl);
-    const audioLink = dlRes.data.download_url;
+    // ডিরেক্ট হাই-স্পিড ডাউনলোড
+    const { data } = await axios.get(audioUrl, { responseType: "arraybuffer" });
+    fs.writeFileSync(path, Buffer.from(data));
 
-    if (!audioLink) throw new Error("Link not found");
-
-    // 3. Download to Buffer and Send
-    const path = __dirname + `/cache/song_${Date.now()}.mp3`;
-    const response = await axios.get(audioLink, { responseType: "arraybuffer" });
-    fs.writeFileSync(path, Buffer.from(response.data));
-
-    // File size safety
+    // ফাইল সাইজ চেক (Max 25MB)
     const stats = fs.statSync(path);
     if (stats.size > 26214400) {
       fs.unlinkSync(path);
-      return api.sendMessage("⭕ File size 25MB er boro, tai pathano gelo na.", threadID, messageID);
+      return api.sendMessage("⭕ গানটির সাইজ ২৫ মেগাবাইটের বেশি, তাই পাঠানো গেল না।", threadID, messageID);
     }
 
-    await api.sendMessage({
-      body: `✅ Download Somponno!\n🎶 Title: ${title}\n🎧 Speed: Original (1x)`,
+    // চ্যাটে গান পাঠানো
+    return api.sendMessage({
+      body: `✅ সুপারফাস্ট ডাউনলোড সম্পন্ন!\n🎶 গান: ${title}\n⏰ ডিউরেশন: ${duration}\n👤 ওনার: Ariyan`,
       attachment: fs.createReadStream(path)
     }, threadID, () => {
       if (fs.existsSync(path)) fs.unlinkSync(path);
     }, messageID);
 
   } catch (err) {
-    console.error(err);
-    return api.sendMessage("❌ Server Busy! Doya kore arekbar chesta korun.", threadID, messageID);
+    return api.sendMessage("❌ ডিরেক্ট মিউজিক সার্ভার এই মুহূর্তে রেসপন্স করছে না। আবার চেষ্টা করুন!", threadID, messageID);
   }
 };
