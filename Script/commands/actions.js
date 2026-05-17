@@ -1,107 +1,94 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-
 module.exports.config = {
-  name: "actions",
-  version: "5.0.0",
-  hasPermission: 0,
+  name: "action",
+  version: "1.1.0",
+  hasPermssion: 0,
   credits: "Ariyan",
-  description: "Slap, Kiss, Hug, Pat, Bonk প্রোফাইল পিকচার মিম (ফেলসেফ ব্যাকআপ সিস্টেমসহ)",
-  commandCategory: "Fun",
-  usages: "/[command] @mention",
-  cooldowns: 2
+  description: "বিভিন্ন ধরনের ইন্টারেক্টিভ অ্যাকশন মিম সরাসরি ব্যবহার করুন",
+  commandCategory: "fun",
+  // এখানে এলিয়াস যোগ করা হয়েছে, যার ফলে এগুলোকে সরাসরি কমান্ড হিসেবে ব্যবহার করা যাবে
+  aliases: ["slap", "bonk", "hug", "kiss", "pat"], 
+  usages: "[slap / bonk / hug / kiss / pat] @mention",
+  cooldowns: 5,
+  dependencies: {
+    "axios": "",
+    "fs-extra": ""
+  }
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID, body, mentions, senderID } = event;
-  const cmd = body.split(" ")[0].slice(1).toLowerCase();
-
-  const validActions = ["slap", "kiss", "hug", "pat", "bonk"];
-  if (!validActions.includes(cmd)) return;
-
-  if (Object.keys(mentions).length === 0) {
-    return api.sendMessage(`কাকে ${cmd} করবেন তাকে মেনশন দিন! 👋`, threadID, messageID);
-  }
-
-  const idTarget = Object.keys(mentions)[0];
-  const name = mentions[idTarget].replace("@", "");
+module.exports.run = async ({ api, event, args, commandName }) => {
+  const axios = require('axios');
+  const fs = require("fs-extra");
   
-  const cacheDir = __dirname + "/cache";
-  const path = cacheDir + `/${cmd}_${Date.now()}.jpg`;
-  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-
-  // ফেসবুক গ্রাফ এপিআই দিয়ে হাই-কোয়ালিটি প্রোফাইল পিকচার লিংক
-  const avatarSender = `https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-  const avatarTarget = `https://graph.facebook.com/${idTarget}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-
-  // টেক্সট মেসেজ
-  let msg = "";
-  if (cmd == "slap") msg = `ঐ ${name}, খেয়ে যা একটা চড়! 👋💥`;
-  if (cmd == "kiss") msg = `উম্মাহ! ${name} 💋🙈`;
-  if (cmd == "hug") msg = `আসো ${name}, জড়িয়ে ধরি! 🤗❤️`;
-  if (cmd == "pat") msg = `লক্ষ্মী সোনা ${name} (Pat)! 🤚✨`;
-  if (cmd == "bonk") msg = `${name}-কে মাথায় একটা বোনক (Bonk) দেওয়া হলো! 🔨😂`;
-
-  const wait = await api.sendMessage(`⏳ একটু অপেক্ষা করুন বস, ছবি তৈরি হচ্ছে...`, threadID, messageID);
-
-  // সার্ভার ১: ক্যানভাস মিম জেনারেটর এপিআই
-  const canvasServers = [
-    `https://api.canvas-api.site/api/${cmd}?avatar1=${encodeURIComponent(avatarSender)}&avatar2=${encodeURIComponent(avatarTarget)}`,
-    `https://api.samirapi.tech/canvas/${cmd}?avatar1=${encodeURIComponent(avatarSender)}&avatar2=${encodeURIComponent(avatarTarget)}`
-  ];
-
-  // সার্ভার ২: ব্যাকআপ ডিরেক্ট অ্যানিমেটেড/স্ট্যাটিক ইমেজ লিংক (যদি মিম এপিআই একদম কাজ না করে)
-  const backupImages = {
-    slap: "https://i.postimg.cc/mD8g76b9/slap.jpg",
-    kiss: "https://i.postimg.cc/kg7vH67p/kiss.jpg",
-    hug: "https://i.postimg.cc/vH8pM7XG/hug.jpg",
-    pat: "https://i.postimg.cc/85zXpccG/pat.jpg",
-    bonk: "https://i.postimg.cc/BvNfNfC4/bonk.jpg"
+  // ব্যবহারকারী কোন নাম দিয়ে কমান্ড ডেকেছে (যেমন: bonk নাকি slap) তা নির্ধারণ করা
+  let actionType = commandName.toLowerCase();
+  
+  // যদি কেউ ভুলে শুধু /action লেখে, তবে মেইন নাম 'action' আসবে। সেক্ষেত্রে args[0] চেক করবে
+  if (actionType === "action") {
+    actionType = args[0]?.toLowerCase();
+  }
+  
+  const availableActions = ["slap", "bonk", "hug", "kiss", "pat"];
+  
+  // সঠিক অ্যাকশন চেক
+  if (!actionType || !availableActions.includes(actionType)) {
+    return api.sendMessage(
+      `❌ দয়া করে একটি সঠিক কমান্ড বেছে নিন!\n\n` +
+      `📌 সরাসরি ব্যবহার করার নিয়ম:\n` +
+      `• /slap @mention (থাপ্পড় মারা)\n` +
+      `• /bonk @mention (মাথায় বাড়ি দেওয়া)\n` +
+      `• /hug @mention (জড়িয়ে ধরা)\n` +
+      `• /kiss @mention (চুমু দেওয়া)\n` +
+      `• /pat @mention (মাথায় হাত বুলানো)`, 
+      event.threadID, event.messageID
+    );
+  }
+  
+  // মেনশন চেক করা (যাকে মেনশন করা হয়েছে তার আইডি)
+  var mention = Object.keys(event.mentions)[0];
+  if (!mention) return api.sendMessage(`❌ আপনি কাকে ${actionType} করতে চান, তাকে মেনশন করুন!`, event.threadID, event.messageID);
+  
+  let tag = event.mentions[mention].replace("@", "");    
+  
+  // প্রতিটি অ্যাকশনের কনফিগ ডাটা
+  let configMap = {
+    slap: { emoji: "👊", api: "slap", txt: `ঐ ${tag}, আরিয়ান তোর গালে কষে একটা থাপ্পড় মারলো! 👋💥\n\nবেশি ছাবলামি করলে গাল লাল করে দিব 😾` },
+    bonk: { emoji: "🔨", api: "bonk", txt: `ঐ ${tag}, আরিয়ান তোর মাথায় কষে একটা বোনক মারলো! 🔨💥\n\nবেশি পাকা পোক্তামি করলে পিটায়া সোজা করে দিব!` },
+    hug: { emoji: "❤️", api: "hug", txt: `আহা রে ${tag}! আরিয়ান توকে খুব সুন্দর করে একটা জড়িয়ে ধরলো (Hug)! 🤗✨` },
+    kiss: { emoji: "😘", api: "kiss", txt: `উম্মাাা! 😘 ${tag}, আরিয়ান তোকে একটা মায়াবী কিস করলো!` },
+    pat: { emoji: "🥰", api: "pat", txt: `সব ঠিক হয়ে যাবে ${tag}! আরিয়ান তোর মাথায় আলতো করে হাত বুলিয়ে দিচ্ছে... 🥰` }
   };
 
-  let success = false;
-
-  // প্রথমে প্রোফাইল পিকচার মিম সার্ভারগুলো ট্রাই করবে
-  for (let i = 0; i < canvasServers.length; i++) {
-    try {
-      const response = await axios.get(canvasServers[i], { responseType: "arraybuffer", timeout: 10000 });
-      fs.writeFileSync(path, Buffer.from(response.data));
-      success = true;
-      break;
-    } catch (e) {
-      console.log(`Canvas server ${i+1} failed, trying next...`);
-    }
-  }
-
-  // যদি ক্যানভাস এপিআই এর সব সার্ভার ডাউন থাকে, তাহলে ব্যাকআপ ডিরেক্ট মিম ইমেজ লোড করবে
-  if (!success) {
-    try {
-      const backupResponse = await axios.get(backupImages[cmd], { responseType: "arraybuffer", timeout: 10000 });
-      fs.writeFileSync(path, Buffer.from(backupResponse.data));
-      success = true;
-      msg = `⚠️ (সার্ভার ডাউন, ব্যাকআপ ইমেজ পাঠানো হলো)\n\n` + msg;
-    } catch (err) {
-      console.log("Backup image load failed too.");
-    }
-  }
-
-  api.unsendMessage(wait.messageID);
-
-  if (success) {
+  try {
+    // waifu.pics এপিআই থেকে ডাটা নেওয়া
+    const res = await axios.get(`https://api.waifu.pics/sfw/${configMap[actionType].api}`);
+    let getURL = res.data.url;
+    let ext = getURL.substring(getURL.lastIndexOf(".") + 1);
+    
+    const path = __dirname + `/cache/action_${actionType}.${ext}`;
+    
+    // ইমেজ/জিআইএফ বাফার ডাউনলোড (সার্ভার ক্র্যাশ প্রুফ)
+    const imageBuffer = await axios.get(getURL, { responseType: 'arraybuffer' });
+    fs.writeFileSync(path, Buffer.from(imageBuffer.data, 'utf-8'));
+    
+    // ইমোজি রিয়্যাকশন দেওয়া
+    api.setMessageReaction(configMap[actionType].emoji, event.messageID, (err) => {}, true);
+    
+    // মেসেজ ও মিডিয়া পাঠানো
     return api.sendMessage({
-      body: msg,
+      body: configMap[actionType].txt,
+      mentions: [{
+        tag: tag,
+        id: mention
+      }],
       attachment: fs.createReadStream(path)
-    }, threadID, () => {
+    }, event.threadID, () => {
+      // ফাইল পাঠানোর পরেই ডিলিট করে দেওয়া যেন স্টোরেজ জ্যাম না হয়
       if (fs.existsSync(path)) fs.unlinkSync(path);
-    }, messageID);
-  } else {
-    return api.sendMessage(`❌ দুঃখিত বস, ফেসবুক সার্ভার বা এপিআই কোনোটিই রেসপন্স করছে না। একটু পর আবার চেষ্টা করুন।`, threadID, messageID);
-  }
-};
+    }, event.messageID);
 
-module.exports.onLoad = () => {
-  const actions = ["slap", "kiss", "hug", "pat", "bonk"];
-  actions.forEach(a => {
-    if (!global.client.commands.has(a)) global.client.commands.set(a, module.exports);
-  });
+  } catch (err) {
+    console.error(err);
+    api.sendMessage("❌ এপিআই সার্ভার রেসপন্স করছে না। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।", event.threadID, event.messageID);
+    api.setMessageReaction("☹️", event.messageID, (err) => {}, true);
+  }     
 };
